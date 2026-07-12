@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cart</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+  </head>
+  <body>
+    <nav class="navigation">
+      <div class="container">
+        <div class="nav-box">
+          <div class="nav-left">
+            <a href="/">
+              <img
+                src="https://www.mobilecentre.am/assets/img/logo.svg"
+                alt="logo"
+              />
+            </a>
+          </div>
+
+          <div class="nav-center">
+            <form action="/search" method="get">
+              <input type="text" name="search" placeholder="Search" />
+              <button type="submit">
+                <i class="bi bi-search"></i>
+              </button>
+            </form>
+          </div>
+
+          <div class="nav-right">
+          <% if(Object.keys(currentUser).length !== 0){%>
+            <form action="/api/logout" method="post">
+              <button type="submit" class="logoutBtn"><i class="bi bi-box-arrow-right"></i></button>
+            </form>
+            <a href="/orders">Orders</a>
+            <a href="/favorites"><i class="bi bi-heart"></i></a>
+          <%} else{%> 
+            <a href="/login"><i class="bi bi-person"></i></a>
+          <%}%>
+            <a href="/cart"><i class="bi bi-cart"></i> <%=cart.length%></a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+
+    <div class="cart-products">
+
+        <div class="container cart-products-box">
+            <div class="left-cart">
+                <h2>Cart</h2>
+                <hr>
+                <div class="cart-products-list">
+                    <% if(cart.length === 0 ){%>
+                      <div class="noCartBox">
+                        <h2>There Is Nothing In The Cart</h2>
+                      </div>
+                    <%}%>
+                    <% cart.forEach((product)=>{%>
+                        <div class="cart-specific-product">
+                          <div class="cart-product">
+                            <img src=<%=product.image%> alt=<%=product.title%>>
+
+                            <div class="cart-product-infos">
+                                <p class="titleofp"><%=product.title%></p>
+                                <p><%=product.price%> AMD</p>
+                            </div>
+                          </div>
+                          <div class="cart-product-quantity-box">
+                              <form action="/cart/<%=product.id%>/minus" method="post">
+                                  <button type="submit">-</button>
+                              </form>
+                              <span><%=product.quantity%></span>
+                              <form action="/cart/<%=product.id%>/plus" method="post">
+                                  <button type="submit">+</button>
+                              </form>
+                          </div>
+
+                          <div class="total-delete-box">
+                              <p><%=product.total%> AMD</p>
+                              <form action="/cart/<%=product.id%>/delete" method="post">
+                                  <button type="submit">Delete</button>
+                              </form>
+                          </div>
+                        </div>
+                        <hr>
+                    <% }) %>
+                </div>
+
+            </div>
+            <div class="right-cart">
+                <%if(Object.keys(currentUser).length !== 0 && currentUser.cart.length !== 0){%>
+                  <h3><span>Total:</span> <span>
+                    <%=totalAll%> AMD
+                  </span> </h3>
+                  <form class="shipping-info" action="/create-checkout-session" method="post">
+                    <input type="text" placeholder="Enter Your Name" value="<%=currentUser.name%>" name="name" required>
+                    <input type="text" placeholder="Enter Your Email" value="<%=currentUser.email%>" name="email" required>
+                    <input type="text" placeholder="Enter Your City" name="city" required>
+                    <input type="text" placeholder="Enter Your Address" name="address" required>
+                    <input type="text" placeholder="Enter Your Additional Information !" name="additionalInfo">
+                    <button type="submit" class="checkoutBtn">Checkout</button>
+                  </form>
+                <%} else if(Object.keys(currentUser).length !== 0 && currentUser.cart.length === 0){%>
+                    <span></span>
+                <%} else{%>
+                  <p>You need to login to see more detailed info about the purchase</p>
+                  <a href="/api/login" class="loginBtn">Login</a>
+                <%}%>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footerBox">
+          <div class="footerLeft">
+            <span>Mobile Center</span>
+          </div>
+          <div class="footerRight">
+            <span>© 2026 MobileCentre Art LLC. All Rights Reserved. (AM)</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

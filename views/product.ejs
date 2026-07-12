@@ -28,7 +28,16 @@
         </div>
 
         <div class="nav-right">
-          <a>Cart</a>
+          <% if(Object.keys(currentUser).length !== 0){%>
+            <form action="/api/logout" method="post">
+              <button type="submit" class="logoutBtn"><i class="bi bi-box-arrow-right"></i></button>
+            </form>
+            <a href="/orders">Orders</a>
+            <a href="/favorites"><i class="bi bi-heart"></i></a>
+          <%} else{%> 
+            <a href="/api/login"><i class="bi bi-person"></i></a>
+          <%}%>
+          <a href="/cart"><i class="bi bi-cart"></i> <%=cartLength%></a>
         </div>
       </div>
     </div>
@@ -45,8 +54,16 @@
       </div>
 
       <div class="product-info">
-        <h1><%= product.title %></h1>
-
+        <div class="upperInfo">
+          <h1><%= product.title %></h1>
+          <% if(Object.keys(currentUser).length !== 0){%>
+            <form class="productPageForm" action="<%= currentUser.favorites.some(fav => fav.id === product.id) ? '/favorites/' + product.id + '/delete' : '/favorites/' + product.id %>" method="post">
+              <button type="submit" class="heartBtn">
+                <i class="bi-heart <%= favorites.some(fav => fav.id === product.id) ? 'activeHeartTag' : 'heartTag' %>"></i>
+              </button>
+            </form>
+            <%}%>
+        </div>
         <h2><%= product.brand %></h2>
 
         <p>
@@ -67,16 +84,24 @@
         </div>
 
         <% if (product.inStock > 0) { %>
-          <p class="availability">Available</p>
+          <p class="availabilityInfo">Available</p>
         <% } else { %>
-          <p class="outofstock">Out Of Stock</p>
+          <p class="outofstockInfo">Out Of Stock</p>
         <% } %>
         
         <div class="clear">
         </div>
+
+          
         
 
-        <button>Buy</button>
+          <%if(product.inStock > 0){%>
+            <form action="/cart/<%= product.id %>" method="post">
+              <button type="submit" class="buyBtn">Buy</button>
+            </form>
+          <%} else{%>
+            <button class="not-availableBtn">Not Available</button>
+          <%}%>
       </div>
 
     </div>
@@ -100,14 +125,15 @@
 
     <div class="products">
       <% relatedProducts.forEach(product => { %>
-        <a
-          href="/product/<%= product.slug %>"
+        <div
           class="product"
         >
-          <img
+          <a href="/product/<%= product.slug %>">
+            <img
             src="<%= product.image %>"
             alt="<%= product.title %>"
           >
+          </a>
 
           <h3><%= product.title %></h3>
 
@@ -115,10 +141,14 @@
             <%= product.price.toLocaleString() %> AMD
           </p>
 
-          <button>
-            Buy
-          </button>
-        </a>
+          <%if(product.inStock > 0){%>
+            <form action="/cart/<%= product.id %>" method="post">
+              <button type="submit" class="buyBtn">Buy</button>
+            </form>
+          <%} else{%>
+            <button class="not-availableBtn">Not Available</button>
+          <%}%>
+        </div>
       <% }) %>
     </div>
 

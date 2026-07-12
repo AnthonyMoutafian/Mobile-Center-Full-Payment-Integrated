@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+  <body>
+    <nav class="navigation">
+      <div class="container">
+        <div class="nav-box">
+          <div class="nav-left">
+            <a href="/">
+              <img
+                src="https://www.mobilecentre.am/assets/img/logo.svg"
+                alt="logo"
+              />
+            </a>
+          </div>
+
+          <div class="nav-center">
+            <form action="/search" method="get">
+              <input type="text" name="search" placeholder="Search" />
+              <button type="submit">
+                <i class="bi bi-search"></i>
+              </button>
+            </form>
+          </div>
+
+          <div class="nav-right">
+          <% if(Object.keys(currentUser).length !== 0){%>
+            <form action="/api/logout" method="post">
+              <button type="submit" class="logoutBtn"><i class="bi bi-box-arrow-right"></i></button>
+            </form>
+            <a href="/orders">Orders</a>
+            <a href="/favorites"><i class="bi bi-heart"></i></a>
+          <%} else{%> 
+            <a href="/api/login"><i class="bi bi-person"></i></a>
+          <%}%>
+            <a href="/cart"><i class="bi bi-cart"></i> <%=cartLength%></a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container titleFavoritesBox">
+        <h1>My Orders</h1>
+    </div>
+
+    <div class="container ordersBox">
+        <% if (Object.keys(currentUser).length !== 0 && orders.length !== 0) { %>
+
+    <% orders.forEach((order , index) => { %>
+        <div class="container">
+            <div class="order">
+            <h3>Order Num. <%= index + 1%></h3>
+
+            <div class="order-products">
+
+                <% order.products.forEach((product) => { %>
+
+                    <div class="order-product">
+
+                        <a href="/product/<%= product.slug %>">
+                            <img src="<%= product.image %>" alt="<%= product.title %>">
+                        </a>
+
+                        <div class="order-product-info">
+
+                            <h2><%= product.title %></h2>
+
+                            <p class="quantity">
+                                Quantity: <%= product.quantity.toLocaleString() %> Pcs.
+                            </p>
+
+                            <p class="price">
+                                <%= product.total.toLocaleString() %> AMD
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                <%})%>
+
+                </div>
+
+                <p class="order-total">
+                    Total: <%= order.totalAll.toLocaleString() %> AMD
+                </p>
+
+            </div>
+        </div>
+
+        </div>
+        
+        <% }) %>
+
+        <% } else if (Object.keys(currentUser).length !== 0 && orders.length === 0) { %>
+
+            <div class="noOrdersBox">
+                <h3 class="noOrdersText">No Orders Yet!</h3>
+            </div>
+
+        <% } %>
+    </div>
+
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footerBox">
+          <div class="footerLeft">
+            <span>Mobile Center</span>
+          </div>
+          <div class="footerRight">
+            <span>© 2026 MobileCentre Art LLC. All Rights Reserved. (AM)</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
