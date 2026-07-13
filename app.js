@@ -3,10 +3,7 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const cors = require("cors");
-const Stripe = require("stripe");
 const dotenv = require("dotenv");
-const crypto = require("crypto");
 
 dotenv.config();
 
@@ -45,8 +42,6 @@ app.locals.services = {
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
-
-
 
 app.use(logger("dev"));
 
