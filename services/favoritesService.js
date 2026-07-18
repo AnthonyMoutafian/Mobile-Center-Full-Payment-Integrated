@@ -1,75 +1,101 @@
+const { ObjectId } = require("mongodb");
 const { ReadDBService } = require("./readDBService");
-const fs = require("fs").promises;
-const path = require("path");
 
 class FavoritesService extends ReadDBService {
   async getFavorites() {
-    const users = await super.getDB("users");
-    const currentUser = users[0].currentUser;
+    const db = this.getDB();
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      return [];
-    } else {
-      const favorites = currentUser.favorites;
-      return favorites;
-    }
+    const currentUser = await db.collection("currentUser").findOne({});
+
+    if (!currentUser) return [];
+
+    return currentUser.favorites || [];
   }
-  async addFavorites(body) {
-    const id = body;
-    const users = await super.getDB("users");
-    const products = await super.getDB("products");
 
-    const allUsers = users[0].users;
-    const currentUser = users[0].currentUser;
+  async addFavorites(id) {
+    const db = this.getDB();
 
-    const product = products.find((product) => product.id === id);
+    const currentUser = await db.collection("currentUser").findOne({});
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      return [];
-    } else {
-      const index = allUsers.findIndex((user) => user.id === currentUser.id);
+    if (!currentUser) return [];
 
-      const isAvailable = allUsers[index].favorites.find(
-        (item) => item.id === product.id,
-      );
+    const objectId = new ObjectId(id);
 
-      if (isAvailable) {
-        return currentUser.favorites;
-      } else {
-        users[0].users[index].favorites.push(product);
-        users[0].currentUser.favorites.push(product);
+    const product = await db.collection("products").findOne({
+      _id: objectId,
+    });
 
-        await super.saveToUsers(users);
-        return users[0].currentUser.favorites;
-      }
+    if (!product) return [];
+
+    const exists = currentUser.favorites.some(
+      (fav) => fav._id.toString() === id,
+    );
+
+    if (exists) {
+      return currentUser.favorites;
     }
+
+    await db.collection("currentUser").updateOne(
+      {
+        _id: currentUser._id,
+      },
+      {
+        $push: {
+          favorites: product,
+        },
+      },
+    );
+
+    await db.collection("users").updateOne(
+      {
+        _id: currentUser._id,
+      },
+      {
+        $push: {
+          favorites: product,
+        },
+      },
+    );
+
+    return [...currentUser.favorites, product];
   }
-  async deleteFavorites(body) {
-    const id = body;
-    const users = await super.getDB("users");
-    const products = await super.getDB("products");
-    const allUsers = users[0].users;
-    const currentUser = users[0].currentUser;
-    const product = products.find((product) => product.id === id);
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      return [];
-    } else {
-      const index = allUsers.findIndex((user) => user.id === currentUser.id);
+  async deleteFavorites(id) {
+    const db = this.getDB();
 
-      if (index === -1) return currentUser.favorites;
+    const currentUser = await db.collection("currentUser").findOne({});
 
-      const updatedFavorites = allUsers[index].favorites.filter(
-        (item) => item.id !== product.id,
-      );
+    if (!currentUser) return [];
 
-      users[0].users[index].favorites = updatedFavorites;
-      users[0].currentUser.favorites = updatedFavorites;
+    const objectId = new ObjectId(id);
 
-      await super.saveToUsers(users);
+    await db.collection("currentUser").updateOne(
+      {
+        _id: currentUser._id,
+      },
+      {
+        $pull: {
+          favorites: {
+            _id: objectId,
+          },
+        },
+      },
+    );
 
-      return users[0].currentUser.favorites;
-    }
+    await db.collection("users").updateOne(
+      {
+        _id: currentUser._id,
+      },
+      {
+        $pull: {
+          favorites: {
+            _id: objectId,
+          },
+        },
+      },
+    );
+
+    return await this.getFavorites();
   }
 }
 

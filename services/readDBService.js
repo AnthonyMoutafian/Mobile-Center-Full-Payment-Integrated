@@ -1,19 +1,48 @@
-const fs = require("fs").promises;
-const path = require("path");
+const { getDb } = require("../db");
 
 class ReadDBService {
-  async saveToUsers(data) {
-    const dbPath = path.join(__dirname, "..", "db", "users.json");
-    await fs.writeFile(dbPath, JSON.stringify(data, null, 2), "utf-8");
+  getDB() {
+    return getDb();
   }
-  async getDB(filename) {
-    const data = JSON.parse(
-      await fs.readFile(
-        path.join(__dirname, "..", "db", `${filename}.json`),
-        "utf-8",
-      ),
+
+  async getCollection(collection) {
+    const db = this.getDB();
+
+    return await db.collection(collection).find({}).toArray();
+  }
+
+  async getOne(collection, query = {}) {
+    const db = this.getDB();
+
+    return await db.collection(collection).findOne(query);
+  }
+
+  async saveToUsers(id, data) {
+    const db = this.getDB();
+
+    await db.collection("users").updateOne(
+      {
+        _id: id,
+      },
+
+      {
+        $set: data,
+      },
     );
-    return data;
+  }
+
+  async saveToCurrentUser(id, data) {
+    const db = this.getDB();
+
+    await db.collection("currentUser").updateOne(
+      {
+        _id: id,
+      },
+
+      {
+        $set: data,
+      },
+    );
   }
 }
 

@@ -2,37 +2,54 @@ const { ReadDBService } = require("../services/readDBService");
 
 class FavoritesController extends ReadDBService {
   async getFavoritesPage(req, res) {
-    const cart = await req.app.locals.services.cartItems.getCart();
-    const data = await req.app.locals.services.users.getDB("users");
-    const favorites = await req.app.locals.services.favorites.getFavorites();
-    const users = data[0].users;
-    const currentUser = data[0].currentUser;
+    try {
+      const cart = await req.app.locals.services.cartItems.getCart();
 
-    res.render("favorites", {
-      cartLength: cart.length,
-      users: users,
-      currentUser: currentUser,
-      favorites: favorites,
-    });
+      const currentUser = await super.getDB()
+        .collection("currentUser")
+        .findOne({});
+
+      const favorites = await req.app.locals.services.favorites.getFavorites();
+
+      res.render("favorites", {
+        cartLength: cart.length,
+
+        currentUser: currentUser || {},
+
+        favorites,
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).send(err.message);
+    }
   }
+
   async addFavorites(req, res) {
     try {
       const id = req.params.id;
-      const favorites =
-        await req.app.locals.services.favorites.addFavorites(id);
+
+      await req.app.locals.services.favorites.addFavorites(id);
+
       res.redirect(req.get("referer") || "/");
     } catch (err) {
-      res.json({ message: err.message });
+      res.json({
+        message: err.message,
+      });
     }
   }
-  async deleteFavorites(req,res){
+
+  async deleteFavorites(req, res) {
     try {
       const id = req.params.id;
-      const favorites =
-        await req.app.locals.services.favorites.deleteFavorites(id);
+
+      await req.app.locals.services.favorites.deleteFavorites(id);
+
       res.redirect(req.get("referer") || "/");
     } catch (err) {
-      res.json({ message: err.message });
+      res.json({
+        message: err.message,
+      });
     }
   }
 }

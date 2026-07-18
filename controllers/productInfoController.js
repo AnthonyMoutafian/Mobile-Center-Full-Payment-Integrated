@@ -2,24 +2,38 @@ const { ReadDBService } = require("../services/readDBService");
 
 class ProductInfoController extends ReadDBService {
   async getProductInfo(req, res) {
-    const slug = req.params.slug;
-    const slugOfProduct =
-      await req.app.locals.services.slugOfProduct.getProductInfo(slug);
-    const cart = await req.app.locals.services.cartItems.getCart();
-    const data = await req.app.locals.services.users.getDB("users");
-    const favorites = await req.app.locals.services.favorites.getFavorites();
-    const users = data[0].users;
-    const currentUser = data[0].currentUser;
+    try {
+      const slug = req.params.slug;
 
-    res.render("product", {
-      title: slugOfProduct.product.title,
-      product: slugOfProduct.product,
-      relatedProducts: slugOfProduct.relatedProducts,
-      cartLength: cart.length,
-      users:users,
-      currentUser:currentUser,
-      favorites: favorites,
-    });
+      const productData =
+        await req.app.locals.services.slugOfProduct.getProductInfo(slug);
+
+      const cart = await req.app.locals.services.cartItems.getCart();
+
+      const currentUser = await super.getDB()
+        .collection("currentUser")
+        .findOne({});
+
+      const favorites = await req.app.locals.services.favorites.getFavorites();
+
+      res.render("product", {
+        title: productData.product.title,
+
+        product: productData.product,
+
+        relatedProducts: productData.relatedProducts,
+
+        cartLength: cart.length,
+
+        currentUser: currentUser || {},
+
+        favorites,
+      });
+    } catch (err) {
+      console.log(err);
+
+      res.status(500).send(err.message);
+    }
   }
 }
 

@@ -2,22 +2,21 @@ const express = require("express");
 const Stripe = require("stripe");
 const crypto = require("crypto");
 const bodyParser = require("body-parser");
+const { ObjectId } = require("mongodb");
 
 const router = express.Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 const AMD_TO_USD = 380;
 
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    console.log("CHECKOUT START");
+    const db = req.app.locals.services.users.getDB();
 
-    const data = await req.app.locals.services.users.getDB("users");
+    const currentUser = await db.collection("currentUser").findOne({});
 
-    const users = data[0].users;
-    const currentUser = data[0].currentUser;
-
-    if (!currentUser || Object.keys(currentUser).length === 0) {
+    if (!currentUser) {
       return res.status(401).send("Login required");
     }
 
@@ -43,17 +42,29 @@ router.post("/create-checkout-session", async (req, res) => {
       createdAt: new Date(),
     };
 
-    const userIndex = users.findIndex((user) => user.id === currentUser.id);
+    await db.collection("users").updateOne(
+      {
+        _id: currentUser._id,
+      },
 
-    if (userIndex === -1) {
-      return res.status(404).send("User not found");
-    }
+      {
+        $push: {
+          orders: newOrder,
+        },
+      },
+    );
 
-    users[userIndex].orders.push(newOrder);
+    await db.collection("currentUser").updateOne(
+      {
+        _id: currentUser._id,
+      },
 
-    data[0].currentUser.orders.push(newOrder);
-
-    await req.app.locals.services.users.saveToUsers(data);
+      {
+        $push: {
+          orders: newOrder,
+        },
+      },
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -66,6 +77,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
           product_data: {
             images: [product.image],
+
             name: product.title,
           },
 
@@ -76,7 +88,8 @@ router.post("/create-checkout-session", async (req, res) => {
       })),
 
       metadata: {
-        userId: String(currentUser.id),
+        userId: String(currentUser._id),
+
         orderId,
       },
 
@@ -85,11 +98,8 @@ router.post("/create-checkout-session", async (req, res) => {
       cancel_url: "http://localhost:3000/cart",
     });
 
-    console.log("STRIPE SESSION CREATED");
-
     res.redirect(session.url);
   } catch (err) {
-    console.log("CHECKOUT ERROR");
     console.log(err);
 
     res.status(500).send(err.message);
@@ -98,9 +108,11 @@ router.post("/create-checkout-session", async (req, res) => {
 
 router.post(
   "/webhook",
+
   bodyParser.raw({
     type: "application/json",
   }),
+
   async (req, res) => {
     let event;
 
@@ -113,50 +125,58 @@ router.post(
         process.env.STRIPE_WEBHOOK_SECRET,
       );
     } catch (err) {
-      console.log(err.message);
-
       return res.status(400).send(`Webhook Error ${err.message}`);
     }
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
-      const userId = Number(session.metadata.userId);
+      const db = req.app.locals.services.users.getDB();
+
+      const userId = new ObjectId(session.metadata.userId);
 
       const orderId = session.metadata.orderId;
 
-      const data = await req.app.locals.services.users.getDB("users");
+      const user = await db.collection("users").findOne({
+        _id: userId,
+      });
 
-      const users = data[0].users;
-
-      const userIndex = users.findIndex((user) => user.id === userId);
-
-      if (userIndex !== -1) {
-        const orderIndex = users[userIndex].orders.findIndex(
-          (order) => order.id === orderId,
-        );
-
-        if (orderIndex !== -1) {
-          users[userIndex].orders[orderIndex].paid = true;
-
-          console.log("ORDER PAID:", users[userIndex].orders[orderIndex]);
-        }
-
-        users[userIndex].cart = [];
-
-        if (data[0].currentUser.id === userId) {
-          const currentOrderIndex = data[0].currentUser.orders.findIndex(
-            (order) => order.id === orderId,
-          );
-
-          if (currentOrderIndex !== -1) {
-            data[0].currentUser.orders[currentOrderIndex].paid = true;
+      if (user) {
+        const updatedOrders = user.orders.map((order) => {
+          if (order.id === orderId) {
+            order.paid = true;
           }
 
-          data[0].currentUser.cart = [];
-        }
+          return order;
+        });
 
-        await req.app.locals.services.users.saveToUsers(data);
+        await db.collection("users").updateOne(
+          {
+            _id: userId,
+          },
+
+          {
+            $set: {
+              orders: updatedOrders,
+
+              cart: [],
+            },
+          },
+        );
+
+        await db.collection("currentUser").updateOne(
+          {
+            _id: userId,
+          },
+
+          {
+            $set: {
+              orders: updatedOrders,
+
+              cart: [],
+            },
+          },
+        );
       }
     }
 

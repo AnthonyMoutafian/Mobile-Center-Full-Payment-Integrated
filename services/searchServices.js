@@ -1,16 +1,21 @@
-const fs = require("fs").promises;
-const path = require("path");
 const { ReadDBService } = require("./readDBService");
 
 class SearchServices extends ReadDBService {
-  async search(body) {
-    const products = await super.getDB("products");
+  async search(value) {
+    const db = this.getDB();
 
-    const searchedProducts = products.filter((product) =>
-      product.title.toLowerCase().includes(body),
-    );
+    const searchedProducts = await db
+      .collection("products")
+      .find({
+        title: {
+          $regex: value,
+          $options: "i",
+        },
+      })
+      .toArray();
 
     const specifications = {};
+
     const brands = [];
 
     searchedProducts.forEach((product) => {
@@ -30,10 +35,12 @@ class SearchServices extends ReadDBService {
     });
 
     return {
-        searchProducts: searchedProducts,
-        specifications: specifications,
-        brands: brands,
-    }
+      searchProducts: searchedProducts,
+
+      specifications,
+
+      brands,
+    };
   }
 }
 

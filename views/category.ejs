@@ -130,9 +130,9 @@
         </span>
         <% if(Object.keys(currentUser).length !== 0){%>
         <span>
-          <form action="<%= currentUser.favorites.some(fav => fav.id === product.id) ? '/favorites/' + product.id + '/delete' : '/favorites/' + product.id %>" method="post">
+          <form action="<%= currentUser.favorites.some(fav => fav.id === product._id) ? '/favorites/' + product.id + '/delete' : '/favorites/' + product._id %>" method="post">
             <button type="submit" class="heartBtn">
-              <i class="bi-heart <%= favorites.some(fav => fav.id === product.id) ? 'activeHeartTag' : 'heartTag' %>"></i>
+              <i class="bi-heart <%= favorites.some(fav => fav.id === product._id) ? 'activeHeartTag' : 'heartTag' %>"></i>
             </button>
           </form>
         </span>
@@ -150,7 +150,7 @@
       </p>
 
       <%if(product.inStock > 0){%>
-        <form action="/cart/<%= product.id %>" method="post">
+        <form action="/cart/<%= product._id %>" method="post">
           <button type="submit" class="buyBtn">Buy</button>
         </form>
       <%} else{%>

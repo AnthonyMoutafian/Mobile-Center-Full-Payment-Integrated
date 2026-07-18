@@ -57,9 +57,9 @@
         <div class="upperInfo">
           <h1><%= product.title %></h1>
           <% if(Object.keys(currentUser).length !== 0){%>
-            <form class="productPageForm" action="<%= currentUser.favorites.some(fav => fav.id === product.id) ? '/favorites/' + product.id + '/delete' : '/favorites/' + product.id %>" method="post">
+            <form class="productPageForm" action="<%= currentUser.favorites.some(fav => fav._id === product._id) ? '/favorites/' + product._id + '/delete' : '/favorites/' + product._id %>" method="post">
               <button type="submit" class="heartBtn">
-                <i class="bi-heart <%= favorites.some(fav => fav.id === product.id) ? 'activeHeartTag' : 'heartTag' %>"></i>
+                <i class="bi-heart <%= favorites.some(fav => fav._id === product._id) ? 'activeHeartTag' : 'heartTag' %>"></i>
               </button>
             </form>
             <%}%>
@@ -96,7 +96,7 @@
         
 
           <%if(product.inStock > 0){%>
-            <form action="/cart/<%= product.id %>" method="post">
+            <form action="/cart/<%= product._id %>" method="post">
               <button type="submit" class="buyBtn">Buy</button>
             </form>
           <%} else{%>
@@ -142,7 +142,7 @@
           </p>
 
           <%if(product.inStock > 0){%>
-            <form action="/cart/<%= product.id %>" method="post">
+            <form action="/cart/<%= product._id %>" method="post">
               <button type="submit" class="buyBtn">Buy</button>
             </form>
           <%} else{%>

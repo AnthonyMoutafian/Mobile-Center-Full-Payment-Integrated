@@ -3,6 +3,7 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+const { connectToDB } = require("./db");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -27,6 +28,7 @@ const ordersRouter = require("./routes/orders");
 const paymentRouter = require("./routes/payment");
 
 var app = express();
+connectToDB();
 
 app.locals.services = {
   products: new ReadDBService(),

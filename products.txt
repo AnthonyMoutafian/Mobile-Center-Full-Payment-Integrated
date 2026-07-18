@@ -1,6 +1,5 @@
 [
   {
-    "id": "1",
     "categorySlug": "phones",
     "brand": "Samsung",
     "title": "Samsung Galaxy S25 Ultra",
@@ -20,7 +19,6 @@
     ]
   },
   {
-    "id": "2",
     "categorySlug": "phones",
     "brand": "Samsung",
     "title": "Samsung Galaxy S25+",
@@ -39,7 +37,6 @@
     ]
   },
   {
-    "id": "3",
     "categorySlug": "phones",
     "brand": "Apple",
     "title": "Apple iPhone 17 Pro",
@@ -60,7 +57,6 @@
     ]
   },
   {
-    "id": "4",
     "categorySlug": "phones",
     "brand": "Apple",
     "title": "Apple iPhone 17",
@@ -79,7 +75,6 @@
     ]
   },
   {
-    "id": "5",
     "categorySlug": "tablets",
     "brand": "Apple",
     "title": "Apple iPad 11 Wi-Fi 128GB 2025 (Blue)",
@@ -98,7 +93,6 @@
     ]
   },
   {
-    "id": "6",
     "categorySlug": "tablets",
     "brand": "Samsung",
     "title": "Samsung Galaxy Tab A11+ Wi-Fi 256GB (Silver)",
@@ -117,7 +111,6 @@
     ]
   },
   {
-    "id": "7",
     "categorySlug": "watches",
     "brand": "Green Lion",
     "title": "Green Lion Communicate 49 Ultra",
@@ -135,7 +128,6 @@
     ]
   },
   {
-    "id": "8",
     "categorySlug": "watches",
     "brand": "Xiaomi",
     "title": "Xiaomi Redmi Watch 5 Active",

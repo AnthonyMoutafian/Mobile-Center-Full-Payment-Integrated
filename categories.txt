@@ -1,18 +1,15 @@
 [
   {
-    "id": "1",
     "title": "Հեռախոսներ",
     "image": "https://www.mobilecentre.am/img/catpic/7e5bfc56f6a47e5d0005d8e0297d85f6ea436d07phones.png",
     "slug": "phones"
   },
   {
-    "id": "2",
     "title": "Պլանշետներ",
     "image": "https://www.mobilecentre.am/img/catpic/90aebd4a2670a8cbc987tablets.png",
     "slug": "tablets"
   },
   {
-    "id": "3",
     "title": "Ժամացույցներ",
     "image": "https://www.mobilecentre.am/img/catpic/08d9f44910f5c95028ffwatches.png",
     "slug": "watches"

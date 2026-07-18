@@ -1,10 +1,11 @@
-const fs = require("fs").promises;
-const path = require("path");
 const { ReadDBService } = require("./readDBService");
 
 class ProductsServices extends ReadDBService {
   async getProducts() {
-    const products = await super.getDB("products");
+    const db = this.getDB();
+
+    const products = await db.collection("products").find({}).toArray();
+
     return products;
   }
 }

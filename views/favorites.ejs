@@ -61,7 +61,7 @@
                     <%= product.inStock > 0 ? "Available" : "Out Of Stock" %>
                 </span>
 
-                <form action="/favorites/<%= product.id %>/delete" method="post">
+                <form action="/favorites/<%= product._id %>/delete" method="post">
                     <button type="submit" class="heartBtn">
                         <i class="bi-heart activeHeartTag"></i>
                     </button>
@@ -79,7 +79,7 @@
             </p>
 
             <% if (product.inStock > 0) { %>
-                <form action="/cart/<%= product.id %>" method="post">
+                <form action="/cart/<%= product._id %>" method="post">
                     <button type="submit" class="buyBtn">Buy</button>
                 </form>
             <% } else { %>

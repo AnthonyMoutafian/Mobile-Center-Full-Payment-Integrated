@@ -1,62 +1,70 @@
-const fs = require("fs").promises;
-const path = require("path");
 const bcrypt = require("bcryptjs");
 const { ReadDBService } = require("./readDBService");
 const { schema } = require("../schema/schema");
 
 class AuthServices extends ReadDBService {
   async registerUser(body) {
-    const users = await super.getDB("users");
+    const db = this.getDB();
+
     const newUser = await schema.validateAsync(body);
-    const hashedPassword = await bcrypt.hash(newUser.password, 10);
-    newUser.id = Date.now();
-    newUser.cart = [];
-    newUser.favorites = []
-    newUser.orders = []
-    newUser.password = hashedPassword;
 
-    const isDuplicated = users[0].users.find(
-      (user) => user.email === newUser.email,
-    );
+    const existingUser = await db.collection("users").findOne({
+      email: newUser.email,
+    });
 
-    if (!isDuplicated) {
-      users[0].users.push(newUser);
-      await super.saveToUsers(users);
-    } else {
+    if (existingUser) {
       throw new Error("Email already exists");
     }
+
+    const hashedPassword = await bcrypt.hash(newUser.password, 10);
+
+    const user = {
+      name: newUser.name,
+
+      email: newUser.email,
+
+      password: hashedPassword,
+
+      cart: [],
+
+      favorites: [],
+
+      orders: [],
+    };
+
+    const result = await db.collection("users").insertOne(user);
+
+    return result.insertedId;
   }
+
   async loginUser(body) {
-    const users = await super.getDB("users") ;
-  
-    const availableUser = users[0].users.find(
-      (user) => user.email === body.email,
-    );
+    const db = this.getDB();
 
-    if (!availableUser) {
+    const user = await db.collection("users").findOne({
+      email: body.email,
+    });
+
+    if (!user) {
       throw new Error("Invalid email or password");
     }
 
-    const isMatchedPasswords = await bcrypt.compare(
-      body.password,
-      availableUser.password,
-    );
+    const passwordMatch = await bcrypt.compare(body.password, user.password);
 
-    if (!isMatchedPasswords) {
+    if (!passwordMatch) {
       throw new Error("Invalid email or password");
     }
 
-    users[0].currentUser = availableUser;
+    await db.collection("currentUser").deleteMany({});
 
-    await super.saveToUsers(users);
+    await db.collection("currentUser").insertOne(user);
 
-    return availableUser;
+    return user;
   }
+
   async logoutUser() {
-    const users = await super.getDB("users");
-    const loggedOutUser = {};
-    users[0].currentUser = loggedOutUser;
-    await super.saveToUsers(users);
+    const db = this.getDB();
+
+    await db.collection("currentUser").deleteMany({});
   }
 }
 

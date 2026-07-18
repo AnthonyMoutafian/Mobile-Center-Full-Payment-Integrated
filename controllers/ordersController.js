@@ -1,56 +1,41 @@
 const { ReadDBService } = require("../services/readDBService");
 
 class OrdersController extends ReadDBService {
-
-  async getOrders(req,res){
-
+  async getOrders(req, res) {
     try {
-
       const cart = await req.app.locals.services.cartItems.getCart();
 
-      const data = await req.app.locals.services.users.getDB("users");
+      const currentUser = await super.getDB()
+        .collection("currentUser")
+        .findOne({});
 
-      const users = data[0].users;
-      const currentUser = data[0].currentUser;
-
-
-      if(!currentUser || Object.keys(currentUser).length === 0){
+      if (!currentUser || Object.keys(currentUser).length === 0) {
         return res.redirect("/api/login");
       }
 
+      const user = await super.getDB().collection("users").findOne({
+        _id: currentUser._id,
+      });
 
-      const user = users.find(
-        user => user.id === currentUser.id
-      );
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
 
+      const paidOrders = user.orders.filter((order) => order.paid === true);
 
-      const paidOrders = user.orders.filter(
-        order => order.paid === true
-      );
-
-
-      res.render("orders",{
-
+      res.render("orders", {
         cartLength: cart.length,
 
         currentUser,
 
-        orders: paidOrders
-
+        orders: paidOrders,
       });
-
-
-    }catch(err){
-
+    } catch (err) {
       console.log(err);
 
       res.status(500).send(err.message);
-
     }
-
   }
-
 }
-
 
 module.exports.OrdersController = OrdersController;

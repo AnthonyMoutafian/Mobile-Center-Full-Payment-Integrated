@@ -1,23 +1,33 @@
-const fs = require("fs").promises;
-const path = require("path");
 const { ReadDBService } = require("./readDBService");
 
 class ProductInfoService extends ReadDBService {
-  async getProductInfo(body) {
-    const products = await super.getDB("products");
-    const product = products.find((p) => p.slug === body);
+  async getProductInfo(slug) {
+    const db = this.getDB();
+
+    const product = await db.collection("products").findOne({
+      slug: slug,
+    });
 
     if (!product) {
-      return res.status(404).send("Product not found");
+      throw new Error("Product not found");
     }
 
-    const relatedProducts = products.filter(
-      (p) => p.categorySlug === product.categorySlug && p.slug !== product.slug,
-    );
+    const relatedProducts = await db
+      .collection("products")
+      .find({
+        categorySlug: product.categorySlug,
+
+        slug: {
+          $ne: product.slug,
+        },
+      })
+      .toArray();
 
     return {
-      relatedProducts: relatedProducts,
-      product: product,
+      product,
+
+      relatedProducts,
+
       title: product.title,
     };
   }

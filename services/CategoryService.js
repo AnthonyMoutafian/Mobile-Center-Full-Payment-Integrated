@@ -1,23 +1,26 @@
-const fs = require("fs").promises;
-const path = require("path");
 const { ReadDBService } = require("./readDBService");
 
 class CategoryService extends ReadDBService {
-  async getCategory(body) {
-    const products = await super.getDB("products");
-    const categories = await super.getDB("categories");
+  async getCategory(slug) {
+    const db = this.getDB();
 
-    const category = categories.find((c) => c.slug === body);
+    const category = await db.collection("categories").findOne({
+      slug: slug,
+    });
 
     if (!category) {
-      return res.status(404).send("Category not found");
+      throw new Error("Category not found");
     }
 
-    let filteredProducts = products.filter(
-      (product) => product.categorySlug === body,
-    );
+    const filteredProducts = await db
+      .collection("products")
+      .find({
+        categorySlug: slug,
+      })
+      .toArray();
 
     const specifications = {};
+
     const brands = [];
 
     filteredProducts.forEach((product) => {
@@ -37,11 +40,14 @@ class CategoryService extends ReadDBService {
     });
 
     return {
-        title: category.title,
-        specifications: specifications,
-        brands: brands,
-        filteredProducts: filteredProducts,
-    }
+      title: category.title,
+
+      specifications,
+
+      brands,
+
+      filteredProducts,
+    };
   }
 }
 

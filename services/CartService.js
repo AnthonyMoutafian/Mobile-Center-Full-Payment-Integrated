@@ -1,285 +1,215 @@
 const { ReadDBService } = require("./readDBService");
-const fs = require("fs").promises;
-const path = require("path");
+const { ObjectId } = require("mongodb");
 
 class CartService extends ReadDBService {
-  async saveToGuestCart(data) {
-    const dbPath = path.join(__dirname, "..", "db", "guestCart.json");
-    await fs.writeFile(dbPath, JSON.stringify(data, null, 2), "utf-8");
-  }
   async getCart() {
-    const users = await super.getDB("users");
-    const currentUser = users[0].currentUser;
+    const db = this.getDB();
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      const cart = await super.getDB("guestCart");
-      return cart;
-    } else {
-      const cart = currentUser.cart;
-      return cart;
+    const currentUser = await db.collection("currentUser").findOne({});
+
+    if (!currentUser) {
+      const guestCart = await db.collection("guestCart").findOne({});
+
+      return guestCart?.items || [];
     }
+
+    return currentUser.cart || [];
   }
+
   async getCartProducts() {
-    const users = await super.getDB("users");
-    const currentUser = users[0].currentUser;
+    return await this.getCart();
+  }
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      const cart = await super.getDB("guestCart");
+  async saveGuestCart(items) {
+    const db = this.getDB();
+
+    await db.collection("guestCart").updateOne(
+      {},
+
+      {
+        $set: {
+          items,
+        },
+      },
+
+      {
+        upsert: true,
+      },
+    );
+  }
+
+  async updateUserCart(userId, cart) {
+    const db = this.getDB();
+
+    await db.collection("currentUser").updateOne(
+      {
+        _id: userId,
+      },
+
+      {
+        $set: {
+          cart,
+        },
+      },
+    );
+
+    await db.collection("users").updateOne(
+      {
+        _id: userId,
+      },
+
+      {
+        $set: {
+          cart,
+        },
+      },
+    );
+  }
+
+  async addToCart(id) {
+    const db = this.getDB();
+
+    const product = await db.collection("products").findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!product) {
+      return [];
+    }
+
+    const currentUser = await db.collection("currentUser").findOne({});
+
+    const cartProduct = {
+      _id: product._id,
+
+      categorySlug: product.categorySlug,
+
+      brand: product.brand,
+
+      title: product.title,
+
+      price: product.price,
+
+      image: product.image,
+
+      quantity: 1,
+
+      total: product.price,
+    };
+
+    if (!currentUser) {
+      const cart = await this.getCart();
+
+      const existing = cart.find(
+        (item) => String(item._id) === String(product._id),
+      );
+
+      if (existing) {
+        existing.quantity += 1;
+
+        existing.total += product.price;
+      } else {
+        cart.push(cartProduct);
+      }
+
+      await this.saveGuestCart(cart);
+
       return cart;
+    }
+
+    const cart = currentUser.cart || [];
+
+    const existing = cart.find(
+      (item) => String(item._id) === String(product._id),
+    );
+
+    if (existing) {
+      existing.quantity += 1;
+
+      existing.total += product.price;
     } else {
-      const cart = currentUser.cart;
+      cart.push(cartProduct);
+    }
+
+    await this.updateUserCart(
+      currentUser._id,
+
+      cart,
+    );
+
+    return cart;
+  }
+
+  async plusQuantity(id) {
+    return await this.addToCart(id);
+  }
+
+  async minusQuantity(id) {
+    const db = this.getDB();
+
+    const currentUser = await db.collection("currentUser").findOne({});
+
+    if (!currentUser) {
+      const cart = await this.getCart();
+
+      const item = cart.find((p) => String(p._id) === String(id));
+
+      if (item && item.quantity > 1) {
+        item.quantity--;
+
+        item.total -= item.price;
+      }
+
+      await this.saveGuestCart(cart);
+
       return cart;
     }
-  }
-  async addToCart(body) {
-    const id = body;
 
-    const users = await super.getDB("users");
-    const products = await super.getDB("products");
+    const cart = currentUser.cart || [];
 
-    const allUsers = users[0].users;
-    const currentUser = users[0].currentUser;
+    const item = cart.find((p) => String(p._id) === String(id));
 
-    const product = {
-      ...products.find((p) => p.id === id),
-      quantity: 0,
-      total: 0,
-    };
+    if (item && item.quantity > 1) {
+      item.quantity--;
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      const guestCart = await super.getDB("guestCart");
-
-      const isAvailable = guestCart.find((item) => item.id === product.id);
-
-      if (!isAvailable && product.inStock > 0) {
-        product.quantity += 1;
-        product.total += product.price;
-        guestCart.push(product);
-
-        await this.saveToGuestCart(guestCart);
-        return guestCart;
-      } else if (isAvailable && product.inStock > 0) {
-        const index = guestCart.findIndex((item) => item.id === product.id);
-
-        guestCart[index].quantity += 1;
-        guestCart[index].total += product.price;
-
-        await this.saveToGuestCart(guestCart);
-        return guestCart;
-      } else {
-        return guestCart;
-      }
-    } else {
-      const index = allUsers.findIndex((user) => user.id === currentUser.id);
-
-      const isAvailable = allUsers[index].cart.find(
-        (item) => item.id === product.id,
-      );
-
-      if (!isAvailable && product.inStock > 0) {
-        product.quantity += 1;
-        product.total += product.price;
-        users[0].users[index].cart.push(product);
-        users[0].currentUser.cart.push(product);
-      } else if (isAvailable && product.inStock > 0) {
-        const indexOfItemInUsers = users[0].users[index].cart.findIndex(
-          (item) => item.id === product.id,
-        );
-        users[0].users[index].cart[indexOfItemInUsers].quantity += 1;
-        users[0].users[index].cart[indexOfItemInUsers].total += product.price;
-        users[0].currentUser.cart[indexOfItemInUsers].quantity += 1;
-        users[0].currentUser.cart[indexOfItemInUsers].total += product.price;
-      } else {
-        const newData = [
-          {
-            users: allUsers,
-            currentUser: currentUser,
-          },
-        ];
-        return newData;
-      }
-
-      const newData = [
-        {
-          users: users[0].users,
-          currentUser: users[0].currentUser,
-        },
-      ];
-
-      await super.saveToUsers(newData);
-      return newData[0].currentUser.cart;
+      item.total -= item.price;
     }
+
+    await this.updateUserCart(
+      currentUser._id,
+
+      cart,
+    );
+
+    return cart;
   }
-  async plusQuantity(body) {
-    const id = body;
 
-    const users = await super.getDB("users");
-    const products = await super.getDB("products");
+  async removeProduct(id) {
+    const currentUser = await this.getDB()
+      .collection("currentUser")
+      .findOne({});
 
-    const allUsers = users[0].users;
-    const currentUser = users[0].currentUser;
+    if (!currentUser) {
+      const cart = await this.getCart();
 
-    const product = products.find((p) => p.id === id);
+      const filtered = cart.filter((item) => String(item._id) !== String(id));
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      const guestCart = await super.getDB("guestCart");
+      await this.saveGuestCart(filtered);
 
-      const isAvailable = guestCart.find((item) => item.id === product.id);
-
-      if (!isAvailable && product.inStock > 0) {
-        return guestCart;
-      } else if (isAvailable && product.inStock > 0) {
-        const index = guestCart.findIndex((item) => item.id === product.id);
-
-        guestCart[index].quantity += 1;
-        guestCart[index].total += product.price;
-
-        await this.saveToGuestCart(guestCart);
-        return guestCart;
-      } else {
-        return guestCart;
-      }
-    } else {
-      const index = allUsers.findIndex((user) => user.id === currentUser.id);
-
-      const isAvailable = allUsers[index].cart.find(
-        (item) => item.id === product.id,
-      );
-
-      if (!isAvailable && product.inStock > 0) {
-        return users[0].currentUser.cart
-      } else if (isAvailable && product.inStock > 0) {
-        const indexOfItemInUsers = users[0].users[index].cart.findIndex(
-          (item) => item.id === product.id,
-        );
-        users[0].users[index].cart[indexOfItemInUsers].quantity += 1;
-        users[0].users[index].cart[indexOfItemInUsers].total += product.price;
-        users[0].currentUser.cart[indexOfItemInUsers].quantity += 1;
-        users[0].currentUser.cart[indexOfItemInUsers].total += product.price;
-      } else {
-        const newData = [
-          {
-            users: allUsers,
-            currentUser: currentUser,
-          },
-        ];
-        return newData;
-      }
-
-      const newData = [
-        {
-          users: users[0].users,
-          currentUser: users[0].currentUser,
-        },
-      ];
-
-      await super.saveToUsers(newData);
-      return newData[0].currentUser.cart;
+      return filtered;
     }
-  }
-  async minusQuantity(body) {
-    const id = body;
 
-    const users = await super.getDB("users");
-    const products = await super.getDB("products");
+    const cart = currentUser.cart || [];
 
-    const allUsers = users[0].users;
-    const currentUser = users[0].currentUser;
+    const filtered = cart.filter((item) => String(item._id) !== String(id));
 
-    const product = {
-      ...products.find((p) => p.id === id),
-      quantity: 0,
-      total: 0,
-    };
+    await this.updateUserCart(
+      currentUser._id,
 
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      const guestCart = await super.getDB("guestCart");
+      filtered,
+    );
 
-      const isAvailable = guestCart.find((item) => item.id === product.id);
-
-      if (isAvailable && isAvailable.quantity === 1) {
-        return guestCart;
-      } else {
-        const index = guestCart.findIndex((item) => item.id === product.id);
-        guestCart[index].quantity -= 1;
-        guestCart[index].total -= product.price;
-
-        await this.saveToGuestCart(guestCart);
-        return guestCart;
-      }
-    } else {
-      const index = allUsers.findIndex((user) => user.id === currentUser.id);
-
-      const isAvailable = allUsers[index].cart.find(
-        (item) => item.id === product.id,
-      );
-
-      if (isAvailable && isAvailable.quantity === 1) {
-        const newData = [
-          {
-            users: users[0].users,
-            currentUser: users[0].currentUser,
-          },
-        ];
-        return newData[0].currentUser.cart;
-      } else {
-        const indexOfItemInUsers = users[0].users[index].cart.findIndex(
-          (item) => item.id === product.id,
-        );
-        users[0].users[index].cart[indexOfItemInUsers].quantity -= 1;
-        users[0].users[index].cart[indexOfItemInUsers].total -= product.price;
-        users[0].currentUser.cart[indexOfItemInUsers].quantity -= 1;
-        users[0].currentUser.cart[indexOfItemInUsers].total -= product.price;
-
-        const newData = [
-          {
-            users: users[0].users,
-            currentUser: users[0].currentUser,
-          },
-        ];
-        await super.saveToUsers(newData);
-        return newData[0].currentUser.cart;
-      }
-    }
-  }
-  async removeProduct(body) {
-    const id = body;
-
-    const users = await super.getDB("users");
-    const products = await super.getDB("products");
-
-    const allUsers = users[0].users;
-    const currentUser = users[0].currentUser;
-
-    const product = {
-      ...products.find((p) => p.id === id),
-      quantity: 0,
-      total: 0,
-    };
-
-    if (!currentUser || Object.keys(currentUser).length === 0) {
-      const guestCart = await super.getDB("guestCart");
-      const index = guestCart.findIndex((item) => item.id === product.id);
-      guestCart.splice(index, 1);
-      await this.saveToGuestCart(guestCart);
-      return guestCart;
-    } else {
-      const index = allUsers.findIndex((user) => user.id === currentUser.id);
-      const indexOfItemInUsers = users[0].users[index].cart.findIndex(
-        (item) => item.id === product.id,
-      );
-      users[0].users[index].cart.splice(indexOfItemInUsers, 1);
-      users[0].currentUser.cart.splice(indexOfItemInUsers, 1);
-
-      const newData = [
-        {
-          users: users[0].users,
-          currentUser: users[0].currentUser,
-        },
-      ];
-      await super.saveToUsers(newData);
-      return newData[0].currentUser.cart;
-    }
+    return filtered;
   }
 }
 
