@@ -2,7 +2,7 @@ const { ReadDBService } = require("./readDBService");
 
 class CategoryService extends ReadDBService {
   async getCategory(slug) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const category = await db.collection("categories").findOne({
       slug: slug,

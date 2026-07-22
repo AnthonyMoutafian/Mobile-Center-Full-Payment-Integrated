@@ -4,15 +4,14 @@ class CategoryController extends ReadDBService {
   async getCategory(req, res) {
     try {
       const categorySlug = req.params.slug;
+      const db = await super.getDB();
 
       const category =
         await req.app.locals.services.category.getCategory(categorySlug);
 
       const cart = await req.app.locals.services.cartItems.getCart();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       const favorites = await req.app.locals.services.favorites.getFavorites();
 

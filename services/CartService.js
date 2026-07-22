@@ -3,7 +3,7 @@ const { ObjectId } = require("mongodb");
 
 class CartService extends ReadDBService {
   async getCart() {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const currentUser = await db.collection("currentUser").findOne({});
 
@@ -21,7 +21,7 @@ class CartService extends ReadDBService {
   }
 
   async saveGuestCart(items) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     await db.collection("guestCart").updateOne(
       {},
@@ -39,7 +39,7 @@ class CartService extends ReadDBService {
   }
 
   async updateUserCart(userId, cart) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     await db.collection("currentUser").updateOne(
       {
@@ -67,7 +67,7 @@ class CartService extends ReadDBService {
   }
 
   async addToCart(id) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const product = await db.collection("products").findOne({
       _id: new ObjectId(id),
@@ -145,7 +145,7 @@ class CartService extends ReadDBService {
   }
 
   async minusQuantity(id) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const currentUser = await db.collection("currentUser").findOne({});
 
@@ -185,9 +185,9 @@ class CartService extends ReadDBService {
   }
 
   async removeProduct(id) {
-    const currentUser = await this.getDB()
-      .collection("currentUser")
-      .findOne({});
+    const db = await super.getDB();
+
+    const currentUser = await db.collection("currentUser").findOne({});
 
     if (!currentUser) {
       const cart = await this.getCart();

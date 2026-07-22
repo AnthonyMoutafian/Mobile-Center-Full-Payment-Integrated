@@ -44,10 +44,9 @@ class AuthController extends ReadDBService {
   async loginUserPage(req, res, next) {
     try {
       const cart = await req.app.locals.services.cartItems.getCart();
+      const db = await super.getDB();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       res.render("login", {
         cartLength: cart.length,
@@ -64,10 +63,9 @@ class AuthController extends ReadDBService {
   async registerUserPage(req, res, next) {
     try {
       const cart = await req.app.locals.services.cartItems.getCart();
+      const db = await super.getDB();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       res.render("register", {
         cartLength: cart.length,

@@ -4,10 +4,9 @@ class FavoritesController extends ReadDBService {
   async getFavoritesPage(req, res) {
     try {
       const cart = await req.app.locals.services.cartItems.getCart();
+      const db = await super.getDB();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       const favorites = await req.app.locals.services.favorites.getFavorites();
 

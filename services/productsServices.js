@@ -2,7 +2,7 @@ const { ReadDBService } = require("./readDBService");
 
 class ProductsServices extends ReadDBService {
   async getProducts() {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const products = await db.collection("products").find({}).toArray();
 

@@ -3,6 +3,8 @@ const Stripe = require("stripe");
 const crypto = require("crypto");
 const bodyParser = require("body-parser");
 const { ObjectId } = require("mongodb");
+const { ReadDBService } = require("../services/readDBService");
+const readDBService = new ReadDBService();
 
 const router = express.Router();
 
@@ -12,7 +14,7 @@ const AMD_TO_USD = 380;
 
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const db = req.app.locals.services.users.getDB();
+    const db = await readDBService.getDB();
 
     const currentUser = await db.collection("currentUser").findOne({});
 
@@ -131,7 +133,7 @@ router.post(
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
-      const db = req.app.locals.services.users.getDB();
+      const db = await readDBService.getDB();
 
       const userId = new ObjectId(session.metadata.userId);
 

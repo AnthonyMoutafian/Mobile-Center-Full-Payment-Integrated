@@ -4,16 +4,15 @@ class OrdersController extends ReadDBService {
   async getOrders(req, res) {
     try {
       const cart = await req.app.locals.services.cartItems.getCart();
+      const db = await super.getDB();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       if (!currentUser || Object.keys(currentUser).length === 0) {
         return res.redirect("/api/login");
       }
 
-      const user = await super.getDB().collection("users").findOne({
+      const user = await db.collection("users").findOne({
         _id: currentUser._id,
       });
 

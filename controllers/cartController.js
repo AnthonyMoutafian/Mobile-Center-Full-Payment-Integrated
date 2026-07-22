@@ -4,10 +4,9 @@ class CartController extends ReadDBService {
   async getCart(req, res, next) {
     try {
       const cart = await req.app.locals.services.cartItems.getCart();
+      const db = await super.getDB();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       res.render("index", {
         cartLength: cart.length,
@@ -24,10 +23,9 @@ class CartController extends ReadDBService {
   async getCartProducts(req, res, next) {
     try {
       const cart = await req.app.locals.services.cartItems.getCartProducts();
+      const db = await super.getDB();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       const totalAll = cart.reduce((sum, product) => sum + product.total, 0);
 

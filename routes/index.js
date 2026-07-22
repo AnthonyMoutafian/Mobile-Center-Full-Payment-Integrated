@@ -1,11 +1,12 @@
 const express = require("express");
-const { getDb } = require("../db");
+const { ReadDBService } = require("../services/readDBService");
+const readDBService = new ReadDBService()
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const db = getDb();
+    const db = await readDBService.getDB();
 
     const products = await db.collection("products").find({}).toArray();
 

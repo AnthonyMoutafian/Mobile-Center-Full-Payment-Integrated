@@ -3,7 +3,7 @@ const { ReadDBService } = require("./readDBService");
 
 class FavoritesService extends ReadDBService {
   async getFavorites() {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const currentUser = await db.collection("currentUser").findOne({});
 
@@ -13,7 +13,7 @@ class FavoritesService extends ReadDBService {
   }
 
   async addFavorites(id) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const currentUser = await db.collection("currentUser").findOne({});
 
@@ -61,7 +61,7 @@ class FavoritesService extends ReadDBService {
   }
 
   async deleteFavorites(id) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const currentUser = await db.collection("currentUser").findOne({});
 

@@ -4,15 +4,14 @@ class ProductInfoController extends ReadDBService {
   async getProductInfo(req, res) {
     try {
       const slug = req.params.slug;
+      const db = await super.getDB();
 
       const productData =
         await req.app.locals.services.slugOfProduct.getProductInfo(slug);
 
       const cart = await req.app.locals.services.cartItems.getCart();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       const favorites = await req.app.locals.services.favorites.getFavorites();
 

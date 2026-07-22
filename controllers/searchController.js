@@ -4,15 +4,14 @@ class SearchController extends ReadDBService {
   async search(req, res) {
     try {
       const searchValue = (req.query.search || "").trim().toLowerCase();
+      const db = await super.getDB();
 
       const searchProducts =
         await req.app.locals.services.search.search(searchValue);
 
       const cart = await req.app.locals.services.cartItems.getCart();
 
-      const currentUser = await super.getDB()
-        .collection("currentUser")
-        .findOne({});
+      const currentUser = await db.collection("currentUser").findOne({});
 
       const favorites = await req.app.locals.services.favorites.getFavorites();
 

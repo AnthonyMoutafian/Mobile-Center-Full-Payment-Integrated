@@ -1,8 +1,9 @@
-const { getDb } = require("../db");
+const { getDb, DB } = require("./db");
 
-class ReadDBService {
-  getDB() {
-    return getDb();
+class ReadDBService extends DB {
+  async getDB() {
+    const db = await super.getDb()
+    return db;
   }
 
   async getCollection(collection) {

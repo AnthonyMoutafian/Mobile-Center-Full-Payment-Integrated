@@ -2,16 +2,3 @@ npm i -g @stripe/cli - IMPORTANT
 stripe login (ATTENTION: For Owner's Laptop Only.)
 stripe listen --forward-to localhost:3000/webhook (ATTENTION: For Anthony's Laptop Only.)
 stripe listen --api-key sk_test_51T42Mq5OvbXNBCpnpqlzRjMMfsVI15YFSxbMiA7m1ZDJE2ijT3CsfMufVdROSr5u5gECXIpR22GLeoHNQi309wck00kEvWpx1K --forward-to localhost:3000/webhook
-
-
-
-DON'T FORGET TO PUT PRODUCTS AND CATEGORIES IN MONGODB COMPASS
-
-Structure -
-
-MobileCenterDB\
-    users
-    currentUser
-    guestCart
-    categories - categories.txt
-    products - products.txt

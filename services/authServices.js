@@ -4,7 +4,7 @@ const { schema } = require("../schema/schema");
 
 class AuthServices extends ReadDBService {
   async registerUser(body) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const newUser = await schema.validateAsync(body);
 
@@ -38,7 +38,7 @@ class AuthServices extends ReadDBService {
   }
 
   async loginUser(body) {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     const user = await db.collection("users").findOne({
       email: body.email,
@@ -62,7 +62,7 @@ class AuthServices extends ReadDBService {
   }
 
   async logoutUser() {
-    const db = this.getDB();
+    const db = await super.getDB();
 
     await db.collection("currentUser").deleteMany({});
   }
