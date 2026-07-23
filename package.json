@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --ignore db ./bin/www"
+    "dev": "node api.js && nodemon --ignore db ./bin/www"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
